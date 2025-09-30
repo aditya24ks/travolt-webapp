@@ -1,255 +1,1327 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dark Green Trip Planner</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelTogether - Find Your Next Adventure Buddy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase App (core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+<!-- Firestore Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+<!-- Firebase Auth namespaced SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+<!-- FirebaseUI (namespaced) -->
+<link rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css">
+<script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAeTT1M5kveFh6Jkeh7YcKbbe01qCLX5pI",
+    authDomain: "travel-buddy-41464.firebaseapp.com",
+    projectId: "travel-buddy-41464",
+    storageBucket: "travel-buddy-41464.appspot.com",
+    messagingSenderId: "236483299906",
+    appId: "1:236483299906:web:81ea611253f7ad1361bbdb",
+    measurementId: "G-PRQM52VGCV"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  // Initialize Firestore Database
+  const db = firebase.firestore();
+</script>
 
-  <style>
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1a2e05; }
-    ::-webkit-scrollbar-thumb { background: #4ade80; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
-    /* Animation */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .trip-card { animation: fadeIn 0.4s ease-out forwards; }
-  </style>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        dark: '#0f172a',
+                        darker: '#020617',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .trip-card:hover .trip-image {
+            transform: scale(1.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .trip-image {
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+        
+        .testimonial-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <!-- Header -->
-    <header class="mb-10 text-center">
-      <h1 class="text-4xl font-bold text-emerald-400 mb-2">
-        <i class="fas fa-map-marked-alt mr-2"></i> Travolt
-      </h1>
-      <p class="text-gray-400">Plan your adventures — Create, Edit & Manage Trips</p>
-    </header>
-    
-    <!-- Create/Edit Trip Form -->
-    <div class="bg-gray-800 rounded-xl shadow-2xl p-6 mb-10 border border-emerald-900/50">
-      <h2 id="form-title" class="text-2xl font-semibold text-emerald-400 mb-6 flex items-center">
-        <i class="fas fa-plus-circle mr-3"></i> Create New Trip
-      </h2>
-      <form id="create-trip" class="space-y-5">
-        <input type="hidden" id="trip_id" />
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label for="destination" class="block text-sm font-medium text-emerald-300 mb-1">
-              <i class="fas fa-map-marker-alt mr-2"></i> Destination
-            </label>
-            <input type="text" id="destination" placeholder="Where are you going?" required
-              class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"/>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="start_date" class="block text-sm font-medium text-emerald-300 mb-1">
-                <i class="far fa-calendar-alt mr-2"></i> Start Date
-              </label>
-              <input type="date" id="start_date" required
-                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"/>
-            </div>
-            <div>
-              <label for="end_date" class="block text-sm font-medium text-emerald-300 mb-1">
-                <i class="far fa-calendar-alt mr-2"></i> End Date
-              </label>
-              <input type="date" id="end_date" required
-                class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"/>
-            </div>
-          </div>
-        </div>
-        <div>
-          <label for="budget" class="block text-sm font-medium text-emerald-300 mb-1">
-            <i class="fas fa-wallet mr-2"></i> Budget ($)
-          </label>
-          <input type="number" id="budget" placeholder="Estimated trip budget" required
-            class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"/>
-        </div>
-        <div>
-          <label for="description" class="block text-sm font-medium text-emerald-300 mb-1">
-            <i class="fas fa-align-left mr-2"></i> Description
-          </label>
-          <textarea id="description" placeholder="Tell us about your trip plans..." rows="4"
-            class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition duration-200"></textarea>
-        </div>
-        <div class="flex space-x-4">
-          <button type="submit"
-            class="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.02] flex items-center justify-center">
-            <i class="fas fa-paper-plane mr-2"></i> <span id="submit-text">Create Trip</span>
-          </button>
-          <button type="button" id="cancel-edit" class="hidden flex-1 bg-red-700 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200">
-            Cancel Edit
-          </button>
-        </div>
-      </form>
+<body class="bg-darker text-gray-200">
+  
+     <!-- Auth bar -->
+<div id="auth-bar" class="bg-gray-900 border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3 text-sm">
+      <span id="user-email" class="text-primary hidden"></span>
+      <span id="user-phone" class="text-gray-300 hidden"></span>
     </div>
-
-    <!-- Saved Trips -->
-    <div id="trips-list" class="space-y-5">
-      <h2 class="text-2xl font-semibold text-emerald-400 mb-6 flex items-center">
-        <i class="fas fa-suitcase-rolling mr-3"></i> Your Trips
-      </h2>
+    <div class="space-x-2">
+      <button id="show-auth" class="text-sm bg-primary/80 hover:bg-primary text-white px-3 py-1.5 rounded">Sign in</button>
+      <button id="signout" class="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded hidden">Sign out</button>
     </div>
   </div>
+</div>
 
-  <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAeTT1M5kveFh6Jkeh7YcKbbe01qCLX5pI",
-      authDomain: "travel-buddy-41464.firebaseapp.com",
-      projectId: "travel-buddy-41464",
-      storageBucket: "travel-buddy-41464.appspot.com",
-      messagingSenderId: "236483299906",
-      appId: "1:236483299906:web:81ea611253f7ad1361bbdb",
-      measurementId: "G-PRQM52VGCV"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<!-- Auth modal -->
+<div id="auth-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+  <div class="bg-dark border border-gray-800 rounded-xl w-full max-w-md mx-4">
+    <div class="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-primary">Sign in</h3>
+      <button id="close-auth" class="text-gray-400 hover:text-gray-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="p-5">
+      <div id="firebaseui-auth-container"></div>
+    </div>
+  </div>
+</div>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('create-trip');
-      const tripsList = document.getElementById('trips-list');
-      const tripIdField = document.getElementById('trip_id');
-      const formTitle = document.getElementById('form-title');
-      const submitText = document.getElementById('submit-text');
-      const cancelBtn = document.getElementById('cancel-edit');
+    <!-- Navigation -->
+    <nav class="bg-dark border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-primary font-bold text-2xl">Travolt</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" class="text-primary px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                            <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Trips</a>
+                            <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Groups</a>
+                            <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Guides</a>
+                            <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Blog</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <button class="bg-dark border border-gray-700 text-gray-300 hover:text-white px-4 py-2 rounded-md text-sm font-medium mr-4">
+                            Log In
+                        </button>
+                        <button class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium">
+                            Sign Up
+                        </button>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-      loadTrips();
+    <!-- Hero Section -->
+    <div class="relative bg-dark overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="relative z-10 pb-8 bg-dark sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+                <div class="pt-10 sm:pt-16 lg:pt-8 lg:pb-14 lg:overflow-hidden">
+                    <div class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+                        <div class="sm:text-center lg:text-left">
+                            <h1 class="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
+                                <span class="block">Find Your Next</span>
+                                <span class="block text-primary">Travel Buddy</span>
+                            </h1>
+                            <p class="mt-3 text-base text-gray-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                                Post trips, join adventures, share costs—safe and fun travel experiences with like-minded explorers.
+                            </p>
+                            <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                                <div class="rounded-md shadow">
+                                    <a href="#" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-emerald-600 md:py-4 md:text-lg md:px-10">
+                                        Get Started
+                                    </a>
+                                </div>
+                                <div class="mt-3 sm:mt-0 sm:ml-3">
+                                    <a href="#" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-dark border-primary md:py-4 md:text-lg md:px-10">
+                                        Learn More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+            <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Group of travelers enjoying a hike">
+        </div>
+    </div>
 
-      // Submit handler
-      form.addEventListener('submit', e => {
-        e.preventDefault();
+    <!-- Quick Search -->
+    <div class="bg-gray-900 px-4 py-6 -mt-10 relative z-20 mx-auto max-w-5xl rounded-lg shadow-xl">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="w-full md:w-auto mb-4 md:mb-0">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Destination</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-map-marker-alt text-gray-400"></i>
+                    </div>
+                    <input id="search-destination" type="text" class="search-input bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5" placeholder="Where to?">
+                </div>
+            </div>
+            <div class="w-full md:w-auto mb-4 md:mb-0 md:mx-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Dates</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-calendar text-gray-400"></i>
+                    </div>
+                   <input id="search-dates" type="date" class="search-input bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5" placeholder="Any dates">
 
-        const trip = {
-          destination: form.destination.value,
-          startDate: form.start_date.value,
-          endDate: form.end_date.value,
-          budget: Number(form.budget.value),
-          description: form.description.value
-        };
+                </div>
+            </div>
+            <div class="w-full md:w-auto">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Trip Type</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-route text-gray-400"></i>
+                    </div>
+                    <select id="search-type" class="search-input bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full pl-10 p-2.5">
+                        <option>Any type</option>
+                        <option>Adventure</option>
+                        <option>Leisure</option>
+                        <option>Backpacking</option>
+                        <option>Road Trip</option>
+                    </select>
+                </div>
+            </div>
+            <button id="search-trips-btn" class="mt-6 md:mt-0 md:ml-4 bg-primary hover:bg-emerald-600 text-white font-medium py-2 px-6 rounded-lg flex items-center">
+                <i class="fas fa-search mr-2"></i> Search
+            </button>
+        </div>
+    </div>
+    <div id="search-results" class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
 
-        const id = tripIdField.value;
+    <!-- <h2>Create a New Trip</h2>
 
-        if (id) {
-          // UPDATE existing
-          db.collection('trips').doc(id).update(trip).then(() => {
-            showNotification('Trip updated!', 'success');
-            resetForm();
-            loadTrips();
-          });
-        } else {
-          // CREATE new
-          db.collection('trips').add(trip).then(() => {
-            showNotification('Trip added successfully!', 'success');
-            form.reset();
-            loadTrips();
-          });
-        }
-      });
+<form id="create-trip">
+  <input type="text" id="destination" placeholder="Destination" required />
+  <input type="date" id="start_date" required />
+  <input type="date" id="end_date" required />
+  <input type="number" id="budget" placeholder="Budget" required />
+  <textarea id="description" placeholder="Description"></textarea>
+  <button type="submit">Create Trip</button>
+</form>
+ Container to show saved trips -->
+<!-- <div id="trips-list"></div> -->
 
-      // Cancel edit
-      cancelBtn.addEventListener('click', resetForm);
 
-      // Load fresh trips list
-      function loadTrips() {
-        tripsList.innerHTML = `<h2 class="text-2xl font-semibold text-emerald-400 mb-6 flex items-center">
-          <i class="fas fa-suitcase-rolling mr-3"></i> Your Trips</h2>`;
-        db.collection('trips').get().then(snapshot => {
-          snapshot.forEach(doc => {
-            const trip = doc.data();
-            trip.id = doc.id;
-            addTripToUI(trip);
-          });
+    <!-- How It Works -->
+    <div class="py-12 bg-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">How It Works</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Find Your Perfect Travel Match
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                    Connect with travelers who share your interests and travel style in just a few simple steps.
+                </p>
+            </div>
+
+            <div class="mt-10">
+                <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+                    <!-- Step 1 -->
+                    <div class="feature-card bg-gray-900 rounded-lg p-6 shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+                            <i class="fas fa-plane-departure text-xl"></i>
+                        </div>
+                        <div class="mt-5">
+                            <h3 class="text-lg font-medium text-white">1. Post or Browse Trips</h3>
+                            <p class="mt-2 text-base text-gray-300">
+                                Create your trip or browse existing ones. Filter by destination, dates, budget and interests.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="feature-card bg-gray-900 rounded-lg p-6 shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+                            <i class="fas fa-comments text-xl"></i>
+                        </div>
+                        <div class="mt-5">
+                            <h3 class="text-lg font-medium text-white">2. Connect & Chat</h3>
+                            <p class="mt-2 text-base text-gray-300">
+                                Message potential travel buddies to see if you're a good match before committing.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="feature-card bg-gray-900 rounded-lg p-6 shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+                            <i class="fas fa-clipboard-list text-xl"></i>
+                        </div>
+                        <div class="mt-5">
+                            <h3 class="text-lg font-medium text-white">3. Collaborate on Plans</h3>
+                            <p class="mt-2 text-base text-gray-300">
+                                Use our planning tools to build itineraries, split costs, and organize logistics together.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="feature-card bg-gray-900 rounded-lg p-6 shadow-lg">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+                            <i class="fas fa-umbrella-beach text-xl"></i>
+                        </div>
+                        <div class="mt-5">
+                            <h3 class="text-lg font-medium text-white">4. Enjoy the Journey</h3>
+                            <p class="mt-2 text-base text-gray-300">
+                                Travel with confidence knowing you've found compatible companions for your adventure.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Trips -->
+    <div class="py-12 bg-darker">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Trending Now</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Featured Group Trips
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 mx-auto">
+                    Join these upcoming adventures with fellow travelers
+                </p>
+            </div>
+            <div id="featured-trips" class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+
+            <!-- <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Trip 1 -->
+                <div class="trip-card bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <div class="relative h-48 overflow-hidden">
+                        <img class="trip-image w-full h-full object-cover" src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1368&q=80" alt="Bali trip">
+                        <div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                            3 spots left
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <img class="w-10 h-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/44.jpg" alt="Organizer">
+                            <div>
+                                <h3 class="text-white font-medium">Bali Adventure</h3>
+                                <p class="text-gray-400 text-sm">by Sarah J.</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-300 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                                <span>Jun 15-25, 2023</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-2 text-primary"></i>
+                                <span>4 travelers</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 mb-4">
+                            Exploring Bali's best beaches, temples and waterfalls. Perfect for adventure seekers who love culture and nature.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$1,200</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white font-medium py-1 px-4 rounded-lg text-sm">
+                                Join Trip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trip 2 -->
+                <div class="trip-card bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <div class="relative h-48 overflow-hidden">
+                        <img class="trip-image w-full h-full object-cover" src="https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Peru trip">
+                        <div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                            5 spots left
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <img class="w-10 h-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Organizer">
+                            <div>
+                                <h3 class="text-white font-medium">Inca Trail Trek</h3>
+                                <p class="text-gray-400 text-sm">by Mark T.</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-300 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                                <span>Aug 5-15, 2023</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-2 text-primary"></i>
+                                <span>6 travelers</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 mb-4">
+                            4-day trek to Machu Picchu with experienced guide. Moderate fitness required. Camping under the stars!
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$850</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white font-medium py-1 px-4 rounded-lg text-sm">
+                                Join Trip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trip 3 -->
+                <div class="trip-card bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <div class="relative h-48 overflow-hidden">
+                        <img class="trip-image w-full h-full object-cover" src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Japan trip">
+                        <div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                            2 spots left
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center mb-2">
+                            <img class="w-10 h-10 rounded-full mr-3" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Organizer">
+                            <div>
+                                <h3 class="text-white font-medium">Japan Cherry Blossoms</h3>
+                                <p class="text-gray-400 text-sm">by Aiko S.</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-300 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                                <span>Mar 25 - Apr 5, 2024</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-2 text-primary"></i>
+                                <span>3 travelers</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 mb-4">
+                            Experience hanami season in Tokyo, Kyoto and Osaka. Food, culture and photography focused trip.
+                        </p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$2,100</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white font-medium py-1 px-4 rounded-lg text-sm">
+                                Join Trip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+
+            <div class="mt-10 text-center">
+                <a href="#" class="inline-flex items-center px-6 py-3 border border-primary text-base font-medium rounded-md text-primary bg-dark hover:bg-gray-800">
+                    View All Trips <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Travel Inspiration -->
+    <div class="py-12 bg-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Travel Inspiration</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Guides & Trip Ideas
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                    Discover curated travel content to spark your next adventure
+                </p>
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Guide 1 -->
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-48 object-cover" src="https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Summer destinations">
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-2">
+                            <span>June 10, 2023</span>
+                            <span class="mx-2">•</span>
+                            <span>8 min read</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Summer Must-See Destinations for 2023</h3>
+                        <p class="text-gray-300 mb-4">
+                            From hidden beaches to mountain retreats, discover the top destinations to visit this summer with our comprehensive guide.
+                        </p>
+                        <a href="#" class="text-primary font-medium inline-flex items-center">
+                            Read More <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Guide 2 -->
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-48 object-cover" src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Budget travel">
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-2">
+                            <span>May 28, 2023</span>
+                            <span class="mx-2">•</span>
+                            <span>12 min read</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">Budget Asia Roadtrips: 3 Epic Itineraries</h3>
+                        <p class="text-gray-300 mb-4">
+                            Explore Southeast Asia on a budget with these carefully planned routes that maximize experiences while minimizing costs.
+                        </p>
+                        <a href="#" class="text-primary font-medium inline-flex items-center">
+                            Read More <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div
+                    >
+                </div>
+
+                <!-- Local Events -->
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Upcoming Local Events</h3>
+                        
+                        <div class="mb-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-primary rounded-lg p-2 mr-4">
+                                    <i class="fas fa-hiking text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Tokyo Hiking Group</h4>
+                                    <p class="text-gray-300 text-sm">Mount Takao Sunset Hike - June 17</p>
+                                    <p class="text-gray-400 text-xs mt-1">12 travelers joined</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-primary rounded-lg p-2 mr-4">
+                                    <i class="fas fa-utensils text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Bangkok Food Tour</h4>
+                                    <p class="text-gray-300 text-sm">Street Food Crawl - June 20</p>
+                                    <p class="text-gray-400 text-xs mt-1">8 spots available</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 bg-primary rounded-lg p-2 mr-4">
+                                    <i class="fas fa-camera text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Barcelona Photo Walk</h4>
+                                    <p class="text-gray-300 text-sm">Gothic Quarter Exploration - June 22</p>
+                                    <p class="text-gray-400 text-xs mt-1">5 travelers joined</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="#" class="text-primary font-medium inline-flex items-center">
+                            View All Events <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join or Find a Group -->
+    <div class="py-16 bg-gradient-to-r from-gray-900 to-darker">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
+                <div class="mb-8 lg:mb-0">
+                    <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
+                        <span class="block">Ready to Find Your</span>
+                        <span class="block text-primary">Travel Tribe?</span>
+                    </h2>
+                    <p class="mt-3 text-lg text-gray-300">
+                        Whether you're looking to join an existing group or create your own adventure, we've got you covered.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="bg-gray-900 rounded-lg shadow-lg p-6 text-center">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white mb-4">
+                            <i class="fas fa-search text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-white mb-2">Find a Travel Buddy</h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Browse thousands of travelers looking for companions on similar trips.
+                        </p>
+                        <a href="#" class="text-primary font-medium text-sm inline-flex items-center">
+                            Search Now <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg shadow-lg p-6 text-center">
+                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary text-white mb-4">
+                            <i class="fas fa-plus text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-white mb-2">Start Your Own Trip</h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Create a trip and invite others to join your adventure. Set your own rules and itinerary.
+                        </p>
+                        <a href=".//createtrip.html" class="text-primary font-medium text-sm inline-flex items-center">
+                            Create Trip <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Value Propositions -->
+    <div class="py-12 bg-darker">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Travel With Confidence</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Our Safety Features
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 mx-auto">
+                    We prioritize your safety and peace of mind throughout your journey
+                </p>
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-user-check text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Verified Members</h3>
+                            <p class="mt-1 text-gray-300">
+                                All users complete ID verification and profile screening before joining trips.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-star text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Ratings & Reviews</h3>
+                            <p class="mt-1 text-gray-300">
+                                Read honest feedback from other travelers about their experiences.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-shield-alt text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Secure Payments</h3>
+                            <p class="mt-1 text-gray-300">
+                                All financial transactions are protected with bank-level security.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-ambulance text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Travel SOS</h3>
+                            <p class="mt-1 text-gray-300">
+                                24/7 emergency support and assistance wherever you are.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-comment-dots text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Private & Group Chat</h3>
+                            <p class="mt-1 text-gray-300">
+                                Communicate securely within our platform before and during your trip.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-primary rounded-lg p-3 mr-4">
+                            <i class="fas fa-handshake text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-white">Trip Agreements</h3>
+                            <p class="mt-1 text-gray-300">
+                                Formalize expectations with customizable trip contracts between members.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Guides -->
+    <div class="py-12 bg-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Local Experiences</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Meet Locals & Book Activities
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                    Enhance your trip with authentic experiences hosted by locals
+                </p>
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Cooking class">
+                    <div class="p-4">
+                        <h3 class="text-white font-medium mb-1">Authentic Thai Cooking Class</h3>
+                        <p class="text-gray-400 text-sm mb-2">Bangkok, Thailand</p>
+                        <div class="flex items-center text-sm text-gray-300 mb-3">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span>4.9 (128 reviews)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$45/person</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white text-xs font-medium py-1 px-3 rounded">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Photo walk">
+                    <div class="p-4">
+                        <h3 class="text-white font-medium mb-1">Tokyo Night Photography Walk</h3>
+                        <p class="text-gray-400 text-sm mb-2">Tokyo, Japan</p>
+                        <div class="flex items-center text-sm text-gray-300 mb-3">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span>4.8 (97 reviews)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$35/person</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white text-xs font-medium py-1 px-3 rounded">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1503917988258-f87a78e3c995?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80" alt="Wine tasting">
+                    <div class="p-4">
+                        <h3 class="text-white font-medium mb-1">Tuscany Wine Tasting Tour</h3>
+                        <p class="text-gray-400 text-sm mb-2">Florence, Italy</p>
+                        <div class="flex items-center text-sm text-gray-300 mb-3">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span>5.0 (214 reviews)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$75/person</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white text-xs font-medium py-1 px-3 rounded">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-40 object-cover" src="https://images.unsplash.com/photo-1566438480900-0609be27a4be?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1589&q=80" alt="Kayaking">
+                    <div class="p-4">
+                        <h3 class="text-white font-medium mb-1">Halong Bay Kayaking Adventure</h3>
+                        <p class="text-gray-400 text-sm mb-2">Halong, Vietnam</p>
+                        <div class="flex items-center text-sm text-gray-300 mb-3">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span>4.7 (156 reviews)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary font-bold">$60/person</span>
+                            <button class="bg-primary hover:bg-emerald-600 text-white text-xs font-medium py-1 px-3 rounded">
+                                Book Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 text-center">
+                <a href="#" class="inline-flex items-center px-6 py-3 border border-primary text-base font-medium rounded-md text-primary bg-dark hover:bg-gray-800">
+                    Browse All Experiences <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Features -->
+    <div class="py-12 bg-darker">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Our App Features</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    Everything You Need for Group Travel
+                </p>
+                <p class="mt-4 max-w-2xl text-xl text-gray-300 lg:mx-auto">
+                    Powerful tools to plan, organize and enjoy your trip with others
+                </p>
+            </div>
+
+            <div class="mt-10">
+                <div class="relative">
+                    <div class="relative overflow-hidden rounded-xl">
+                        <div class="absolute inset-0 bg-gradient-to-r from-primary to-emerald-600 opacity-20 rounded-xl"></div>
+                        <div class="relative bg-gray-900 px-6 py-8 sm:p-10">
+                            <div class="grid grid-cols-1 gap-8 sm:grid-cols-3">
+                                <div class="text-center">
+                                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary text-white mb-4">
+                                        <i class="fas fa-map-marked-alt text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-white mb-2">Itinerary Builder</h3>
+                                    <p class="text-gray-300">
+                                        Collaborative planning tool to create and share your trip schedule with the group.
+                                    </p>
+                                </div>
+                                <div class="text-center">
+                                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary text-white mb-4">
+                                        <i class="fas fa-money-bill-wave text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-white mb-2">Cost Splitting</h3>
+                                    <p class="text-gray-300">
+                                        Easily track and split expenses among group members with our built-in calculator.
+                                    </p>
+                                </div>
+                                <div class="text-center">
+                                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary text-white mb-4">
+                                        <i class="fas fa-comments text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-white mb-2">Group Chat</h3>
+                                    <p class="text-gray-300">
+                                        Dedicated messaging for your trip with media sharing and important announcements.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-auto" src="https://via.placeholder.com/300x600/1e293b/10b981?text=Itinerary+Screen" alt="App screenshot 1">
+                </div>
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-auto" src="https://via.placeholder.com/300x600/1e293b/10b981?text=Chat+Screen" alt="App screenshot 2">
+                </div>
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-auto" src="https://via.placeholder.com/300x600/1e293b/10b981?text=Expenses+Screen" alt="App screenshot 3">
+                </div>
+                <div class="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                    <img class="w-full h-auto" src="https://via.placeholder.com/300x600/1e293b/10b981?text=Map+Screen" alt="App screenshot 4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testimonials -->
+    <div class="py-12 bg-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:text-center">
+                <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Traveler Stories</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                    What Our Community Says
+                </p>
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="testimonial-card rounded-lg p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img class="w-12 h-12 rounded-full mr-4" src="https://randomuser.me/api/portraits/women/32.jpg" alt="Testimonial">
+                        <div>
+                            <h4 class="text-white font-medium">Jessica L.</h4>
+                            <p class="text-gray-400 text-sm">Bali Group Trip</p>
+                        </div>
+                    </div>
+                    <div class="flex mb-2">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-300">
+                        "I was nervous about traveling with strangers, but our group clicked instantly. We're already planning our next trip together!"
+                    </p>
+                </div>
+
+                <div class="testimonial-card rounded-lg p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img class="w-12 h-12 rounded-full mr-4" src="https://randomuser.me/api/portraits/men/54.jpg" alt="Testimonial">
+                        <div>
+                            <h4 class="text-white font-medium">David K.</h4>
+                            <p class="text-gray-400 text-sm">Peru Adventure</p>
+                        </div>
+                    </div>
+                    <div class="flex mb-2">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-300">
+                        "The itinerary planning tools made organizing our 8-person trek to Machu Picchu so easy. Everyone could contribute ideas."
+                    </p>
+                </div>
+
+                <div class="testimonial-card rounded-lg p-6 shadow-lg">
+                    <div class="flex items-center mb-4">
+                        <img class="w-12 h-12 rounded-full mr-4" src="https://randomuser.me/api/portraits/women/68.jpg" alt="Testimonial">
+                        <div>
+                            <h4 class="text-white font-medium">Sophie M.</h4>
+                            <p class="text-gray-400 text-sm">Japan Cherry Blossoms</p>
+                        </div>
+                    </div>
+                    <div class="flex mb-2">
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                    </div>
+                    <p class="text-gray-300">
+                        "Found two amazing travel buddies who shared my passion for photography. We got shots I never would have found alone."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="bg-gradient-to-r from-primary to-emerald-600">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+            <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                <span class="block">Ready to find your travel tribe?</span>
+                <span class="block">Join thousands of happy travelers today.</span>
+            </h2>
+            <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+                <div class="inline-flex rounded-md shadow">
+                    <a href="#" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50">
+                        Sign Up Free
+                    </a>
+                </div>
+                <div class="ml-3 inline-flex rounded-md shadow">
+                    <a href="#" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary bg-opacity-60 hover:bg-opacity-70">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-white font-medium mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Press</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white font-medium mb-4">Support</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Safety</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Community Guidelines</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white font-medium mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white">Travel Guides</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Trip Ideas</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Local Events</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white">Travel Partners</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white font-medium mb-4">Connect With Us</h3>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                    <p class="text-gray-400 text-sm">
+                        Download our app:
+                    </p>
+                    <div class="flex space-x-2 mt-2">
+                        <a href="#" class="inline-block">
+                            <img class="h-10" src="https://via.placeholder.com/120x40/1e293b/ffffff?text=App+Store" alt="App Store">
+                        </a>
+                        <a href="#" class="inline-block">
+                            <img class="h-10" src="https://via.placeholder.com/120x40/1e293b/ffffff?text=Google+Play" alt="Google Play">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-gray-800 pt-8">
+                <p class="text-gray-400 text-sm text-center">
+                    &copy; 2023 TravelTogether. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple script for mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('[aria-controls="mobile-menu"]');
+            mobileMenuButton.addEventListener('click', function() {
+                const mobileMenu = document.getElementById('mobile-menu');
+                const expanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !expanded);
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
         });
+    </script>
+
+    <!-- live updates for trips -->
+<script>
+// --- TRIP SEARCH FUNCTIONALITY ---
+document.addEventListener('DOMContentLoaded', function () {
+  const searchBtn = document.getElementById('search-trips-btn');
+  const resContainer = document.getElementById('search-results');
+  const destInput = document.getElementById('search-destination');
+  const dateInput = document.getElementById('search-dates');
+  const typeInput = document.getElementById('search-type');
+
+  // Guard: Exit if required elements are missing
+  if (!searchBtn || !resContainer || !destInput || !dateInput || !typeInput) {
+    console.warn('Search elements missing; functionality disabled.');
+    return;
+  }
+
+  // Helper: Case-insensitive partial match
+  function includesIgnoreCase(a, b) {
+    return !b || (a && a.toLowerCase().includes(b.toLowerCase()));
+  }
+
+  // Helper: Convert Firestore Timestamp or string to Date
+  function toDate(v) {
+    return v && v.toDate ? v.toDate() : new Date(v);
+  }
+
+  // Helper: Format date for display
+  function formatDate(d1, d2) {
+    if (!d1 || !d2) return '';
+    const fmt = { year: 'numeric', month: 'short', day: 'numeric' };
+    return `${toDate(d1).toLocaleDateString(undefined, fmt)} - ${toDate(d2).toLocaleDateString(undefined, fmt)}`;
+  }
+
+  // Helper: Get YYYY-MM-DD string for filtering
+  function dStr(v) {
+    if (!v) return '';
+    const d = toDate(v);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Search handler
+  function onSearch(e) {
+    if (e) e.preventDefault();
+    resContainer.innerHTML = `<div class="col-span-full text-gray-400 text-center p-6">Searching...</div>`;
+
+    db.collection("trips").get()
+      .then(snapshot => {
+        let results = [];
+        const destVal = destInput.value.trim();
+        const typeVal = (typeInput.value || '').trim().toLowerCase();
+        const dateVal = dateInput.value.trim();
+
+        snapshot.forEach(doc => {
+          const t = doc.data();
+          if (destVal && !includesIgnoreCase(t.destination, destVal)) return;
+          if (typeVal && typeVal !== 'any type' && t.type && (t.type || '').toLowerCase() !== typeVal) return;
+          if (dateVal && !(includesIgnoreCase(dStr(t.startDate), dateVal) || includesIgnoreCase(dStr(t.endDate), dateVal))) return;
+          results.push({ id: doc.id, ...t });
+        });
+
+        if (results.length === 0) {
+          resContainer.innerHTML = `<div class="col-span-full text-gray-400 text-center p-6">No trips found matching your search.</div>`;
+          return;
+        }
+
+        resContainer.innerHTML = '';
+        results.forEach(trip => {
+          const imgUrl = trip.imageUrl || "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1368&q=80";
+          const organizer = trip.organizer || "Organizer";
+          const budget = trip.budget !== undefined ? trip.budget : "N/A";
+          const spots = trip.spotsLeft || "Spots open";
+          const travelers = trip.travelers || 3;
+          const card = document.createElement('div');
+          card.className = "trip-card bg-gray-900 rounded-lg overflow-hidden shadow-lg flex flex-col";
+          card.innerHTML = `
+            <div class="relative h-48 overflow-hidden">
+              <img class="trip-image w-full h-full object-cover" src="${imgUrl}" alt="${trip.destination} trip"/>
+              <div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                ${spots}
+              </div>
+            </div>
+            <div class="p-6 flex-1 flex flex-col">
+              <div class="flex items-center mb-2">
+                <div>
+                  <h3 class="text-white font-medium">${trip.destination}</h3>
+                  <p class="text-gray-400 text-sm">by ${organizer}</p>
+                </div>
+              </div>
+              <div class="flex justify-between text-sm text-gray-300 mb-4">
+                <div class="flex items-center">
+                  <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                  <span>${formatDate(trip.startDate, trip.endDate)}</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-users mr-2 text-primary"></i>
+                  <span>${travelers} travelers</span>
+                </div>
+              </div>
+              <p class="text-gray-300 mb-4">${trip.description ? trip.description : "No description provided."}</p>
+              <div class="flex justify-between items-center mt-auto">
+                <span class="text-primary font-bold">$${budget}</span>
+                <button class="bg-primary hover:bg-emerald-600 text-white font-medium py-1 px-4 rounded-lg text-sm">Join Trip</button>
+              </div>
+            </div>
+          `;
+          resContainer.appendChild(card);
+        });
+      })
+      .catch(err => {
+        resContainer.innerHTML = `<div class="col-span-full text-red-400 text-center p-6">Could not search trips. Try again.</div>`;
+        console.error('Search error:', err);
+      });
+  }
+
+  // Bind click and Enter key (for UX)
+  searchBtn.addEventListener('click', onSearch);
+  [destInput, dateInput, typeInput].forEach(el => {
+    el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') onSearch(ev); });
+  });
+});
+</script>
+
+
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const tripsContainer = document.getElementById('featured-trips');
+
+  function formatDate(d1, d2) {
+    if (!d1 || !d2) return '';
+    const fmt = { year:'numeric', month:'short', day:'numeric' };
+    return `${new Date(d1).toLocaleDateString(undefined, fmt)} - ${new Date(d2).toLocaleDateString(undefined, fmt)}`;
+  }
+
+  function loadTrips() {
+    tripsContainer.innerHTML = '';
+    db.collection("trips").orderBy("startDate").get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        tripsContainer.innerHTML = `<div class="col-span-full text-gray-400 text-center p-10">No featured trips yet.</div>`;
+        return;
       }
 
-      // Render a trip card
-      function addTripToUI(trip) {
+      snapshot.forEach(doc => {
+        const trip = doc.data();
+        // Use fallback image if none set
+        const imgUrl = trip.imageUrl || "https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=1368&q=80";
+        // Organizer fallback
+        const organizer = trip.organizer || "Organizer";
+        // Budget fallback
+        const budget = trip.budget !== undefined ? trip.budget : "N/A";
+        // Spots/fallback
+        const spots = trip.spotsLeft || "Spots open";
+        // Travelers fallback
+        const travelers = trip.travelers || 3; // Change as needed
         const card = document.createElement('div');
-        card.className = 'trip-card bg-gray-800 rounded-xl p-5 border-l-4 border-emerald-500 shadow-lg';
+        card.className = "trip-card bg-gray-900 rounded-lg overflow-hidden shadow-lg flex flex-col";
         card.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-xl font-bold text-emerald-400">${trip.destination}</h3>
-              <p class="text-gray-400 text-sm mt-1"><i class="far fa-calendar-alt mr-1"></i> ${formatDate(trip.startDate)} - ${formatDate(trip.endDate)}</p>
+          <div class="relative h-48 overflow-hidden">
+            <img class="trip-image w-full h-full object-cover" src="${imgUrl}" alt="${trip.destination} trip" />
+            <div class="absolute top-4 right-4 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+              ${spots}
             </div>
-            <span class="bg-emerald-900/50 text-emerald-300 px-3 py-1 rounded-full text-sm">$${trip.budget}</span>
           </div>
-          ${trip.description ? `<p class="mt-3 text-gray-300">${trip.description}</p>` : ''}
-          <div class="mt-4 flex justify-end space-x-3">
-            <button class="text-emerald-400 hover:text-emerald-300 edit-btn" data-id="${trip.id}"><i class="fas fa-edit"></i></button>
-            <button class="text-red-400 hover:text-red-300 delete-btn" data-id="${trip.id}"><i class="fas fa-trash-alt"></i></button>
+          <div class="p-6 flex-1 flex flex-col">
+            <div class="flex items-center mb-2">
+              <div>
+                <h3 class="text-white font-medium">${trip.destination}</h3>
+                <p class="text-gray-400 text-sm">by ${organizer}</p>
+              </div>
+            </div>
+            <div class="flex justify-between text-sm text-gray-300 mb-4">
+              <div class="flex items-center">
+                <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                <span>${formatDate(trip.startDate, trip.endDate)}</span>
+              </div>
+              <div class="flex items-center">
+                <i class="fas fa-users mr-2 text-primary"></i>
+                <span>${travelers} travelers</span>
+              </div>
+            </div>
+            <p class="text-gray-300 mb-4">
+              ${trip.description ? trip.description : "No description provided."}
+            </p>
+            <div class="flex justify-between items-center mt-auto">
+              <span class="text-primary font-bold">$${budget}</span>
+              <button class="bg-primary hover:bg-emerald-600 text-white font-medium py-1 px-4 rounded-lg text-sm">Join Trip</button>
+            </div>
           </div>
         `;
-        tripsList.appendChild(card);
-
-        // Events
-        card.querySelector('.delete-btn').addEventListener('click', () => deleteTrip(trip.id));
-        card.querySelector('.edit-btn').addEventListener('click', () => editTrip(trip.id));
-      }
-
-      // Delete trip
-      function deleteTrip(id) {
-        db.collection('trips').doc(id).delete().then(() => {
-          showNotification('Trip deleted!', 'success');
-          loadTrips();
-        });
-      }
-
-      // Edit trip (populate form)
-      function editTrip(id) {
-        db.collection('trips').doc(id).get().then(doc => {
-          if (doc.exists) {
-            const t = doc.data();
-            tripIdField.value = id;
-            form.destination.value = t.destination;
-            form.start_date.value = t.startDate;
-            form.end_date.value = t.endDate;
-            form.budget.value = t.budget;
-            form.description.value = t.description || '';
-            formTitle.innerHTML = `<i class="fas fa-edit mr-3"></i> Edit Trip`;
-            submitText.textContent = "Update Trip";
-            cancelBtn.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        });
-      }
-
-      // Reset form to create mode
-      function resetForm() {
-        tripIdField.value = '';
-        form.reset();
-        formTitle.innerHTML = `<i class="fas fa-plus-circle mr-3"></i> Create New Trip`;
-        submitText.textContent = "Create Trip";
-        cancelBtn.classList.add('hidden');
-      }
-
-      // Format date nicely
-      function formatDate(dateStr) {
-        return new Date(dateStr).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
-      }
-
-      // Show notification
-      function showNotification(msg, type) {
-        const box = document.createElement('div');
-        box.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg 
-          ${type==='success' ? 'bg-emerald-800 text-emerald-100' : 'bg-red-800 text-red-100'}`;
-        box.innerHTML = `<i class="fas ${type==='success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i> ${msg}`;
-        document.body.appendChild(box);
-        setTimeout(() => { box.style.opacity = '0'; setTimeout(() => box.remove(), 300); }, 3000);
-      }
+        tripsContainer.appendChild(card);
+      });
     });
-  </script>
+  }
+
+  loadTrips();
+
+  // For live updates, use this instead:
+  // db.collection("trips").orderBy("startDate").onSnapshot(loadTrips);
+});
+</script>
+<script>
+// Auth setup using FirebaseUI
+const auth = firebase.auth();
+
+// Single UI instance
+const ui = new firebaseui.auth.AuthUI(auth);
+
+// Providers: Google, Apple ("apple.com" string), Phone with invisible reCAPTCHA
+const uiConfig = {
+  signInFlow: 'popup',
+  callbacks: {
+    signInSuccessWithAuthResult: function() {
+      // close modal and stay on page
+      document.getElementById('auth-modal').classList.add('hidden');
+      return false;
+    }
+  },
+  signInOptions: [
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+    'apple.com', // Apple provider ID for Web in FirebaseUI
+    {
+      provider: firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+      recaptchaParameters: { size: 'invisible' }, // or 'normal'
+      defaultCountry: 'IN'
+    }
+  ]
+}; // Apple uses "apple.com" in UI config; Phone uses reCAPTCHA per docs. [4][12]
+
+// Modal controls
+const authModal = document.getElementById('auth-modal');
+document.getElementById('show-auth').addEventListener('click', () => {
+  authModal.classList.remove('hidden');
+  ui.start('#firebaseui-auth-container', uiConfig);
+});
+document.getElementById('close-auth').addEventListener('click', () => {
+  authModal.classList.add('hidden');
+});
+
+// Sign out
+document.getElementById('signout').addEventListener('click', () => auth.signOut());
+
+// Reflect auth state in header and optionally gate writes
+auth.onAuthStateChanged(user => {
+  const btnIn = document.getElementById('show-auth');
+  const btnOut = document.getElementById('signout');
+  const emailEl = document.getElementById('user-email');
+  const phoneEl = document.getElementById('user-phone');
+
+  if (user) {
+    btnIn.classList.add('hidden');
+    btnOut.classList.remove('hidden');
+
+    emailEl.classList.add('hidden');
+    phoneEl.classList.add('hidden');
+    if (user.email) { emailEl.textContent = user.email; emailEl.classList.remove('hidden'); }
+    if (user.phoneNumber) { phoneEl.textContent = user.phoneNumber; phoneEl.classList.remove('hidden'); }
+  } else {
+    btnIn.classList.remove('hidden');
+    btnOut.classList.add('hidden');
+    emailEl.classList.add('hidden');
+    phoneEl.classList.add('hidden');
+  }
+});
+
+// OPTIONAL: attach user info when creating trips in your existing code.
+// If you later add a Create Trip form on this page, use:
+// const u = auth.currentUser; include fields like uid: u?.uid, userEmail: u?.email, userPhone: u?.phoneNumber
+</script>
+
+
 </body>
 </html>
